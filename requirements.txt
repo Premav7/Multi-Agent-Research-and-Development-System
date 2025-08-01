@@ -2,3 +2,10 @@ langgraph
 langchain
 langchain_core
 pydantic
+langchain_openai
+tavily-python
+langchain-google-genai
+google-generativeai
+python-dotenv
+langgraph-cli
+uvicorn
