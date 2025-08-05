@@ -9,11 +9,13 @@ from langchain.agents import create_tool_calling_agent, AgentExecutor
 # We are importing the corrected tool
 from tools.web_search import web_search_tool
 from state.state import ResearchState
+from langsmith import traceable
 
 # Retrieve the API key from the environment
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Set up the LLM, explicitly passing the API key
+
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash", 
     temperature=0,
@@ -37,6 +39,7 @@ research_prompt = ChatPromptTemplate.from_messages(
 researcher_agent = create_tool_calling_agent(llm, tools, research_prompt)
 
 # Define a function to run the agent
+@traceable(name="researcher")
 def run_researcher(state: ResearchState) -> ResearchState:
     """Runs the researcher agent to gather data."""
     print("Executing the Researcher agent (Gemini)...")
