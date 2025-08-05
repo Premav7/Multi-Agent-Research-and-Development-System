@@ -18,7 +18,6 @@ code_reviewer_prompt = ChatPromptTemplate.from_messages(
 
 code_reviewer_chain = code_reviewer_prompt | llm
 
-@traceable(name="code_reviewer")
 def run_code_reviewer(state: ResearchState) -> ResearchState:
     """Runs the code reviewer agent to check if the code is complete."""
     print("Executing the Code Reviewer agent...")

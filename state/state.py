@@ -16,6 +16,7 @@ class ResearchState(TypedDict):
         messages: A history of messages between agents and the user.
     """
     query: str
+    rag_context: str  # Add this new field
     research_data: Annotated[List[str], lambda x, y: x + y]
     development_plan: str
     code_draft: str

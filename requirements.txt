@@ -9,3 +9,5 @@ google-generativeai
 python-dotenv
 langgraph-cli
 uvicorn
+faiss-cpu
+pypdf
