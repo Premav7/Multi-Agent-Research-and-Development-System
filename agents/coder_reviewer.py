@@ -26,7 +26,6 @@ def run_code_reviewer(state: ResearchState) -> ResearchState:
 
     content = result.content.strip().lower()
 
-    # We will use 'next' to route the graph, similar to the research reviewer
     if content == "correct":
         return {**state, "next": "code_correct"}
     else:

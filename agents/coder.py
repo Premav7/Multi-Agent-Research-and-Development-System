@@ -28,5 +28,4 @@ def run_coder(state: ResearchState) -> ResearchState:
 
     code_draft = result.content.strip()
 
-    # The code draft is saved in the state
     return {**state, "code_draft": code_draft}

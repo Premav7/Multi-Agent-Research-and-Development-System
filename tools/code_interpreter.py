@@ -16,9 +16,6 @@ def code_interpreter(code: str) -> str:
     print("---EXECUTING CODE INTERPRETER---")
     
     try:
-        # Use subprocess to run the code
-        # We're running it in a new Python process to sandbox it
-        # The timeout prevents the code from running indefinitely
         process = subprocess.run(
             ["python", "-c", code],
             capture_output=True,
@@ -28,8 +25,6 @@ def code_interpreter(code: str) -> str:
         )
         return process.stdout
     except subprocess.CalledProcessError as e:
-        # If the code returns a non-zero exit code, capture the error
         return f"Code execution failed with error:\n{e.stderr}"
     except Exception as e:
-        # Catch other potential errors, like a timeout
         return f"An unexpected error occurred during execution: {e}"
