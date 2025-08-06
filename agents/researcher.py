@@ -9,6 +9,8 @@ from state.state import ResearchState
 from langsmith import traceable
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY not set. Please set it in your environment or a .env file.")
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash", 
@@ -34,9 +36,12 @@ def run_researcher(state: ResearchState) -> ResearchState:
     """Runs the researcher agent to gather data."""
     print("Executing the Researcher agent (Gemini)...")
     
-    agent_executor = AgentExecutor(agent=researcher_agent, tools=tools, verbose=True)
-    
-    result = agent_executor.invoke({"messages": [], "query": state["query"]})
-    new_message = result["output"]
-    
+    try:
+        agent_executor = AgentExecutor(agent=researcher_agent, tools=tools, verbose=True)
+        result = agent_executor.invoke({"messages": [], "query": state["query"]})
+        new_message = result["output"]
+    except Exception as e:
+        print(f"An error occurred during agent execution: {e}")
+        return {**state, "research_data": state["research_data"] + [f"Error: {e}"]}
+
     return {**state, "research_data": state["research_data"] + [new_message]}

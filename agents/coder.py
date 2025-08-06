@@ -1,5 +1,3 @@
-# agents/coder.py
-
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -8,6 +6,8 @@ from state.state import ResearchState
 from langsmith import traceable
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY not set. Please set it in your environment or a .env file.")
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7, google_api_key=GEMINI_API_KEY)
 
 coder_prompt = ChatPromptTemplate.from_messages(

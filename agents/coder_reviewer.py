@@ -1,5 +1,3 @@
-# agents/code_reviewer.py
-
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -7,6 +5,8 @@ from state.state import ResearchState
 from langsmith import traceable
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY not set. Please set it in your environment or a .env file.")
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0, google_api_key=GEMINI_API_KEY)
 
 code_reviewer_prompt = ChatPromptTemplate.from_messages(
@@ -21,9 +21,7 @@ code_reviewer_chain = code_reviewer_prompt | llm
 def run_code_reviewer(state: ResearchState) -> ResearchState:
     """Runs the code reviewer agent to check if the code is complete."""
     print("Executing the Code Reviewer agent...")
-
     result = code_reviewer_chain.invoke({"code_draft": state["code_draft"]})
-
     content = result.content.strip().lower()
 
     if content == "correct":

@@ -1,4 +1,3 @@
-
 from langgraph.graph import StateGraph, START, END
 from langchain_core.runnables import Runnable
 from langsmith import traceable
@@ -13,8 +12,11 @@ from agents.coder_reviewer import run_code_reviewer
 from agents.reviewer_agent import run_reviewer_agent 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
+from tools.code_interpreter import code_interpreter
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY not set. Please set it in your environment or a .env file.")
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0, google_api_key=GEMINI_API_KEY)
 
 
@@ -82,26 +84,46 @@ def research_router(state: ResearchState):
     else:
         print("Query does not require code. Routing to reporting.")
         return "reporting"
+    
+def execute_code_node(state: ResearchState) -> ResearchState:
+
+    print("---EXECUTING CODE DRAFT---")
+    code_output = code_interpreter(state["code_draft"])
+    print("Code Execution Output:", code_output)
+    
+    updated_research_data = state["research_data"] + [f"Code execution output:\n{code_output}"]
+    
+    return {**state, "research_data": updated_research_data, "next": "code_executed"}    
 
 def code_router(state: ResearchState):
-    if state["next"] == "code_revise":
+    # Retrieve the 'next' value from the state with a default to avoid a KeyError
+    next_action = state.get("next")
+    
+    if next_action == "code_revise":
+        print("Code needs revision. Rerouting to code generation.")
         return "code_generation"
+    elif next_action == "code_correct":
+        print("Code is correct. Routing to code execution.")
+        return "execute_code"
     else:
+        print("Invalid code review state. Defaulting to reporting.")
         return "reporting"
     
 def create_research_graph() -> Runnable:
     builder = StateGraph(ResearchState)
     builder.add_node("planning", planning_node)
     builder.add_node("research", run_researcher)
-    builder.add_node("internal_review", run_reviewer_agent) 
+    builder.add_node("internal_review", run_reviewer_agent)
     builder.add_node("code_generation", run_coder)
     builder.add_node("review_code", run_code_reviewer)
+    builder.add_node("execute_code", execute_code_node)  # Add the new node
     builder.add_node("reporting", reporting_node)
-    
+
     def continue_node(state: ResearchState) -> ResearchState:
         return state
     builder.add_node("continue_to_router", continue_node)
 
+    # Existing edges
     builder.add_edge(START, "planning")
     builder.add_edge("planning", "research")
     builder.add_edge("research", "internal_review")
@@ -110,8 +132,8 @@ def create_research_graph() -> Runnable:
         "internal_review",
         internal_review_router,
         {
-            "continue": "continue_to_router", 
-            "revise_research": "research",   
+            "continue": "continue_to_router",
+            "revise_research": "research",
         }
     )
 
@@ -123,16 +145,20 @@ def create_research_graph() -> Runnable:
             "reporting": "reporting"
         }
     )
-
+    
+    # Modified conditional edge
     builder.add_conditional_edges(
         "review_code",
         code_router,
         {
             "code_generation": "code_generation",
+            "execute_code": "execute_code",  # New path
             "reporting": "reporting"
         }
     )
-
+    
+    # New edge from execute_code to reporting
+    builder.add_edge("execute_code", "reporting")
     builder.add_edge("code_generation", "review_code")
     builder.add_edge("reporting", END)
 
