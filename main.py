@@ -12,7 +12,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Include the research router to add its endpoints to the app
 app.include_router(router)
 
 @app.get("/")

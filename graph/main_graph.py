@@ -96,7 +96,6 @@ def execute_code_node(state: ResearchState) -> ResearchState:
     return {**state, "research_data": updated_research_data, "next": "code_executed"}    
 
 def code_router(state: ResearchState):
-    # Retrieve the 'next' value from the state with a default to avoid a KeyError
     next_action = state.get("next")
     
     if next_action == "code_revise":
@@ -116,14 +115,13 @@ def create_research_graph() -> Runnable:
     builder.add_node("internal_review", run_reviewer_agent)
     builder.add_node("code_generation", run_coder)
     builder.add_node("review_code", run_code_reviewer)
-    builder.add_node("execute_code", execute_code_node)  # Add the new node
+    builder.add_node("execute_code", execute_code_node)  
     builder.add_node("reporting", reporting_node)
 
     def continue_node(state: ResearchState) -> ResearchState:
         return state
     builder.add_node("continue_to_router", continue_node)
 
-    # Existing edges
     builder.add_edge(START, "planning")
     builder.add_edge("planning", "research")
     builder.add_edge("research", "internal_review")
@@ -146,18 +144,16 @@ def create_research_graph() -> Runnable:
         }
     )
     
-    # Modified conditional edge
     builder.add_conditional_edges(
         "review_code",
         code_router,
         {
             "code_generation": "code_generation",
-            "execute_code": "execute_code",  # New path
+            "execute_code": "execute_code",  
             "reporting": "reporting"
         }
     )
     
-    # New edge from execute_code to reporting
     builder.add_edge("execute_code", "reporting")
     builder.add_edge("code_generation", "review_code")
     builder.add_edge("reporting", END)
